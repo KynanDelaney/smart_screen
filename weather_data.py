@@ -17,7 +17,7 @@ params = {
 	"longitude": -3.1928189339319695,
 	"current": ["temperature_2m", "apparent_temperature", "precipitation", "cloud_cover", "wind_speed_10m", "wind_direction_10m"],
 	"daily": ["temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "uv_index_max", "precipitation_sum", "wind_speed_10m_max"],
-	"forecast_days": 1
+	"forecast_days": 2
 }
 responses = openmeteo.weather_api(url, params=params)
 
@@ -72,3 +72,6 @@ daily_data["wind_speed_10m_max"] = daily_wind_speed_10m_max
 daily_dataframe = pd.DataFrame(data = daily_data)
 print(daily_temperature_2m_max)
 print(daily_dataframe)
+
+print(int(daily.Variables(1).ValuesAsNumpy()[1]))
+
