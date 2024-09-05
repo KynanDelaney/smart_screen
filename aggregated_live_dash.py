@@ -17,6 +17,11 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, callback, Input, Output, dash_table
 
+# launch into dash on script execute
+import subprocess as sp
+from threading import Timer
+import os
+
 
 # Setup variables
 
@@ -32,6 +37,7 @@ params = {
 	"latitude": 55.967049727775326,
 	"longitude": -3.1928189339319695,
 	"current": ["temperature_2m", "apparent_temperature", "precipitation", "cloud_cover", "wind_speed_10m", "wind_direction_10m"],
+    "hourly": "cloud_cover",
 	"daily": ["temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "uv_index_max", "precipitation_sum", "wind_speed_10m_max"],
 	"forecast_days": 2
 }
@@ -76,19 +82,37 @@ def map_temp_to_icon(value):
     else:
         return html.P("Get inside!", style={"fontSize": "40px"})
 
-def map_rain_to_icon(value):
-    if value == 0:
-        return html.I(className="fa-solid fa-sun fa-10x", style={"justifyContent": "center"})
-    elif 0 < value < 1:
-        return html.I(className="fa-solid fa-cloud-sun fa-10x", style={"justifyContent": "center"})
-    elif 1 <= value < 2:
-        return html.I(className="fa-solid fa-cloud fa-10x", style={"justifyContent": "center"})
-    elif 2 <= value < 4:
-        return html.I(className="fa-solid fa-cloud-rain fa-10x", style={"justifyContent": "center"})
-    elif 4 <= value < 8:
+def map_cloud_to_icon(precipitation = 0, cloud_cover = 0):
+    if precipitation < 1:
+        if cloud_cover < 5:
+            return html.I(className="fa-solid fa-sun fa-10x", style={"justifyContent": "center"})
+        elif 5 <= cloud_cover < 25:
+            return html.I(className="fa-solid fa-cloud-sun fa-10x", style={"justifyContent": "center"})
+        else:
+            return html.I(className="fa-solid fa-cloud fa-10x", style={"justifyContent": "center"})
+
+    elif 1 <= precipitation < 2:
+        if cloud_cover < 25:
+            return html.I(className="fa-solid fa-cloud-sun-rain fa-10x", style={"justifyContent": "center"})
+        else:
+            return html.I(className="fa-solid fa-cloud-rain fa-10x", style={"justifyContent": "center"})
+
+    elif 2 <= precipitation < 4:
         return html.I(className="fa-solid fa-cloud-showers-heavy fa-10x", style={"justifyContent": "center"})
+
+    elif 4 <= precipitation < 8:
+        return html.I(className="fa-solid fa-cloud-showers-water fa-10x", style={"justifyContent": "center"})
+
     else:
         return html.P("Get inside!", style={"fontSize": "40px"})
+
+# Function to open the browser after the Dash server starts
+def open_fullscreen_browser():
+    # Check OS and use the correct command for Chrome
+    if os.name == 'nt':  # Windows
+        os.system('start chrome "http://127.0.0.1:8050/" --kiosk')
+    elif os.name == 'posix':  # macOS/Linux
+        sp.Popen(['chromium-browser', '--kiosk', 'http://127.0.0.1:8050/'], shell=True)
 
 
 # Dash setup
@@ -120,7 +144,7 @@ page_1_layout = html.Div([
         # First Interval and Div
         dcc.Interval(
             id='interval-component-1',
-            interval=3600*1000,  # 1000 milliseconds = 1 second. Hourly
+            interval=1800*1000,  # 1000 milliseconds = 1 second. half-hourly
             n_intervals=0
         ),
         dbc.Col(html.Div(id='live-update-text-1')),
@@ -131,7 +155,7 @@ page_1_layout = html.Div([
 page_2_layout = html.Div([
     dcc.Interval(
             id='interval-component-2',
-            interval=21600*1000,  # 1000 milliseconds = 1 second. 6 hour intervals
+            interval=10800*1000,  # 1000 milliseconds = 1 second. 3-hour intervals
             n_intervals=0
         ),
         dbc.Col(html.Div(id='live-update-text-2')),
@@ -221,7 +245,7 @@ def update_text_1(n):
                         ),
                         # Add the icon outside the <P> element for better control
                         html.Div(
-                            map_rain_to_icon(current_precipitation),
+                            map_cloud_to_icon(current_precipitation, current_cloud_cover),
                             style={
                                 "textAlign": "center",  # Center the icon horizontally
                                 "marginTop": "40px"  # Add some space above the icon
@@ -266,6 +290,29 @@ def update_text_2(n):
     daily_precipitation_sum = int(daily.Variables(5).ValuesAsNumpy()[1])
     daily_wind_speed_10m_max = int(daily.Variables(6).ValuesAsNumpy()[1])
 
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_cloud_cover = hourly.Variables(0).ValuesAsNumpy()
+
+    # Get the time stamps of your forecasted data
+    hourly_data = {"date": pd.date_range(
+        start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+        end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+        freq=pd.Timedelta(seconds=hourly.Interval()),
+        inclusive="left"
+    )}
+
+    # convert lists of times and cloud cover to dataframe
+    hourly_data["cloud_cover"] = hourly_cloud_cover
+    hourly_dataframe = pd.DataFrame(data=hourly_data)
+
+    # Set the datetime column as the index
+    hourly_dataframe.set_index("date", inplace=True)
+
+    # Calculate daily mean cloud cover
+    daily_mean = hourly_dataframe.resample('D').mean()
+    daily_cloud_cover = round(daily_mean["cloud_cover"].iloc[1],1)
+
     weather_forecast_card = html.Div(
         [
             dbc.Card(
@@ -279,14 +326,17 @@ def update_text_2(n):
                                 html.Br(),  # Line break
                                 f"Real-feel: {daily_apparent_temperature_min}°C - {daily_apparent_temperature_max}°C",
                                 html.Br(),  # Line break
-
-                                f"Precipitation: {daily_precipitation_sum}",
                                 html.Br(),  # Line break
-                                f"Wind speed: {daily_wind_speed_10m_max}",
+                                f"Precipitation: {daily_precipitation_sum}mm",
+                                html.Br(),  # Line break
+                                f"Cloud cover: {daily_cloud_cover}%",
+                                html.Br(),  # Line break
+                                html.Br(),  # Line break
+                                f"Wind speed: {daily_wind_speed_10m_max}km/h",
                                 html.Br(),  # Line break
                                 f"UV index: {daily_uv_index_max}"
                             ],
-                            style={"fontSize": "40px"},  # Smaller text size for temperature details
+                            style={"fontSize": "50px"},  # Smaller text size for temperature details
                             className="card-text",
                         ),
                     ]
@@ -341,7 +391,7 @@ def update_text_3(n):
             })
 
     # Creating a DataFrame for easy display
-    df = pd.DataFrame(bus_services)
+    df = pd.DataFrame(bus_services).sort_values(by = ['Minutes Until Departure'], ascending=True)
 
     bus_card = html.Div(
         [
@@ -363,6 +413,7 @@ def update_text_3(n):
                 color='rgb(50, 50, 50)'
             )
         ],
+    style = {"height": "95vh"},
     className = "d-flex align-items-stretch"
     )
 
@@ -385,4 +436,6 @@ def update_page(pathname):
         return '404 Page Not Found'
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    Timer(5,
+          open_fullscreen_browser).start()  # Note no parentheses here
+    app.run_server(debug=True, host='127.0.0.1', port=8050, use_reloader=False)  # Starts the Dash app

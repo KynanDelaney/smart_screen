@@ -16,6 +16,7 @@ params = {
 	"latitude": 55.967049727775326,
 	"longitude": -3.1928189339319695,
 	"current": ["temperature_2m", "apparent_temperature", "precipitation", "cloud_cover", "wind_speed_10m", "wind_direction_10m"],
+	"hourly": "cloud_cover",
 	"daily": ["temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "uv_index_max", "precipitation_sum", "wind_speed_10m_max"],
 	"forecast_days": 2
 }
@@ -70,8 +71,33 @@ daily_data["precipitation_sum"] = daily_precipitation_sum
 daily_data["wind_speed_10m_max"] = daily_wind_speed_10m_max
 
 daily_dataframe = pd.DataFrame(data = daily_data)
-print(daily_temperature_2m_max)
-print(daily_dataframe)
+#print(daily_temperature_2m_max)
+#print(daily_dataframe)
 
-print(int(daily.Variables(1).ValuesAsNumpy()[1]))
+#print(int(daily.Variables(1).ValuesAsNumpy()[1]))
 
+# Process hourly data. The order of variables needs to be the same as requested.
+hourly = response.Hourly()
+hourly_cloud_cover = hourly.Variables(0).ValuesAsNumpy()
+
+# Get the time stamps of your forecasted data
+hourly_data = {"date": pd.date_range(
+	start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+	end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+	freq = pd.Timedelta(seconds = hourly.Interval()),
+	inclusive = "left"
+)}
+
+# convert lists of times and cloud cover to dataframe
+hourly_data["cloud_cover"] = hourly_cloud_cover
+hourly_dataframe = pd.DataFrame(data = hourly_data)
+
+# Set the datetime column as the index
+hourly_dataframe.set_index("date", inplace=True)
+
+# Calculate daily mean cloud cover
+daily_mean = hourly_dataframe.resample('D').mean()
+
+# Display the daily mean cloud cover
+print("Daily Mean Cloud Cover:")
+print(daily_mean["cloud_cover"].iloc[1])
