@@ -68,43 +68,43 @@ def interpolate_colour(value,
 # use weather variables to choose appropriate icons
 def map_temp_to_icon(value):
     if value < 0:
-        return html.I(className="fa-solid fa-snowflake fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-snowflake fa-6x", style={"justifyContent": "center"})
     elif 0 <= value < 5:
-        return html.I(className="fa-solid fa-temperature-empty fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-temperature-empty fa-6x", style={"justifyContent": "center"})
     elif 5 <= value < 10:
-        return html.I(className="fa-solid fa-temperature-quarter fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-temperature-quarter fa-6x", style={"justifyContent": "center"})
     elif 10 <= value < 20:
-        return html.I(className="fa-solid fa-temperature-half fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-temperature-half fa-6x", style={"justifyContent": "center"})
     elif 20 <= value < 25:
-        return html.I(className="fa-solid fa-temperature-three-quarters fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-temperature-three-quarters fa-6x", style={"justifyContent": "center"})
     elif 25 <= value < 30:
-        return html.I(className="fa-solid fa-temperature-full fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-temperature-full fa-6x", style={"justifyContent": "center"})
     else:
-        return html.P("Get inside!", style={"fontSize": "40px"})
+        return html.P("Get inside!", style={"fontSize": "30px"})
 
 def map_cloud_to_icon(precipitation = 0, cloud_cover = 0):
     if precipitation < 1:
         if cloud_cover < 5:
-            return html.I(className="fa-solid fa-sun fa-10x", style={"justifyContent": "center"})
+            return html.I(className="fa-solid fa-sun fa-6x", style={"justifyContent": "center"})
         elif 5 <= cloud_cover < 25:
-            return html.I(className="fa-solid fa-cloud-sun fa-10x", style={"justifyContent": "center"})
+            return html.I(className="fa-solid fa-cloud-sun fa-6x", style={"justifyContent": "center"})
         else:
-            return html.I(className="fa-solid fa-cloud fa-10x", style={"justifyContent": "center"})
+            return html.I(className="fa-solid fa-cloud fa-6x", style={"justifyContent": "center"})
 
     elif 1 <= precipitation < 2:
         if cloud_cover < 25:
-            return html.I(className="fa-solid fa-cloud-sun-rain fa-10x", style={"justifyContent": "center"})
+            return html.I(className="fa-solid fa-cloud-sun-rain fa-6x", style={"justifyContent": "center"})
         else:
-            return html.I(className="fa-solid fa-cloud-rain fa-10x", style={"justifyContent": "center"})
+            return html.I(className="fa-solid fa-cloud-rain fa-6x", style={"justifyContent": "center"})
 
     elif 2 <= precipitation < 4:
-        return html.I(className="fa-solid fa-cloud-showers-heavy fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-cloud-showers-heavy fa-6x", style={"justifyContent": "center"})
 
     elif 4 <= precipitation < 8:
-        return html.I(className="fa-solid fa-cloud-showers-water fa-10x", style={"justifyContent": "center"})
+        return html.I(className="fa-solid fa-cloud-showers-water fa-6x", style={"justifyContent": "center"})
 
     else:
-        return html.P("Get inside!", style={"fontSize": "40px"})
+        return html.P("Get inside!", style={"fontSize": "30px"})
 
 # Function to open the browser after the Dash server starts
 def open_fullscreen_browser():
@@ -124,17 +124,55 @@ app.layout = dbc.Container(
         dcc.Location(id='url', refresh=False, pathname='/page-1'),
         dbc.NavbarSimple(
             children=[
-                dbc.NavItem(dbc.NavLink("Today's Weather", href="/page-1"), style={"marginRight": "20px"}),
-                dbc.NavItem(dbc.NavLink("Tomorrow's Weather", href="/page-2"),style={"marginRight": "20px"}),
+                dbc.NavItem(dbc.NavLink("Today's Weather", href="/page-1"), style={"marginRight": "10px"}),
+                dbc.NavItem(dbc.NavLink("Tomorrow's Weather", href="/page-2"),style={"marginRight": "10px"}),
                 dbc.NavItem(dbc.NavLink("Bus Times", href="/page-3")),
             ],
             brand="Kynan's Dashboard",
-            brand_style={"fontSize": "2rem"},  # Increases brand text size
-            style={"padding": "20px", "fontSize": "1.5rem", "height": "80px"},  # Increases overall navbar size
+            brand_style={"fontSize": "1.5rem"},  # Increases brand text size
+            style={"padding": "10px", "fontSize": "1rem", "height": "60px", 'zIndex': 1000},  # Increases overall navbar size
             color="dark",
             dark=True,
         ),
         html.Div(id='page-content'),
+
+        # Left arrow for navigation
+        html.Div(
+            dcc.Link('←', href='', id='left-arrow',
+                     style={'display': 'block', 'textAlign': 'center', 'lineHeight': '50px', 'height': '100%', 'color': 'rgba(0, 0, 0, 0)'}),
+            style={
+                'position': 'fixed',
+                'left': '20px',
+                'top': '50%',
+                'fontSize': '50px',
+                'cursor': 'pointer',
+                'zIndex': 1000,
+                'width': '60px',  # Wider area for the clickable element
+                'height': '200px',  # Taller area for the clickable element
+                'padding': '10px',  # Add padding around the arrow for better click area
+                'textAlign': 'center',  # Center the arrow inside the clickable area
+                'backgroundColor': 'rgba(0, 0, 0, 0.05)',  # Optional: add a slight background for better visibility
+            },
+        ),
+
+        # Right arrow for navigation
+        html.Div(
+            dcc.Link('→', href='', id='right-arrow',
+                     style={'display': 'block', 'textAlign': 'center', 'lineHeight': '50px', 'height': '100%', 'color': 'rgba(0, 0, 0, 0)'}),
+            style={
+                'position': 'fixed',
+                'right': '20px',
+                'top': '50%',
+                'fontSize': '50px',
+                'cursor': 'pointer',
+                'zIndex': 1000,
+                'width': '60px',  # Wider area for the clickable element
+                'height': '200px',  # Taller area for the clickable element
+                'padding': '10px',  # Add padding around the arrow for better click area
+                'textAlign': 'center',  # Center the arrow inside the clickable area
+                'backgroundColor': 'rgba(0, 0, 0, 0.05)',  # Optional: add a slight background for better visibility
+            },
+        )
     ],
     fluid=True
 )
@@ -200,12 +238,12 @@ def update_text_1(n):
                         html.P(
                             [
                                 html.Br(),  # Line break
-                                f"Ambient temperature: {current_temperature_2m}°C",
+                                f"Ambient temp: {current_temperature_2m}°C",
                                 html.Br(),  # Line break
                                 html.Br(),  # Line break
                                 f"Real-feel: {current_apparent_temperature}°C",
                             ],
-                            style={"fontSize": "40px"},  # Smaller text size for temperature details
+                            style={"fontSize": "24px"},  # Smaller text size for temperature details
                             className="card-text",
                         ),
                         # Add the icon outside the <P> element for better control
@@ -213,7 +251,7 @@ def update_text_1(n):
                             map_temp_to_icon(current_temperature_2m),
                             style={
                                 "textAlign": "center",  # Center the icon horizontally
-                                "marginTop": "40px"  # Add some space above the icon
+                                "marginTop": "24px"  # Add some space above the icon
                             }
                         ),
                     ]
@@ -222,7 +260,7 @@ def update_text_1(n):
                 className="w-100 mb-1",  # fills the available width. has a margin on the bottom
             )
         ],
-        style={"height": "95vh"},  # Set the height of the container to 95% of viewport height
+        style={"height": "90vh"},  # Set the height of the container to 95% of viewport height
         className="d-flex align-items-stretch"
     )
 
@@ -240,7 +278,7 @@ def update_text_1(n):
                                 html.Br(),  # line break
                                 f"Cloud Cover: {current_cloud_cover}%",
                             ],
-                            style={"fontSize": "40px"},
+                            style={"fontSize": "24px"},
                             className="card-text",
                         ),
                         # Add the icon outside the <P> element for better control
@@ -248,7 +286,7 @@ def update_text_1(n):
                             map_cloud_to_icon(current_precipitation, current_cloud_cover),
                             style={
                                 "textAlign": "center",  # Center the icon horizontally
-                                "marginTop": "40px"  # Add some space above the icon
+                                "marginTop": "20px"  # Add some space above the icon
                             }
                         ),
                     ]
@@ -258,7 +296,7 @@ def update_text_1(n):
                 className="w-100 mb-1",
             )
         ],
-        style={"height": "95vh"},  # Set the height of the container to 100% of the viewport height
+        style={"height": "90vh"},  # Set the height of the container to 100% of the viewport height
         className="d-flex align-items-stretch"
     )
 
@@ -311,41 +349,43 @@ def update_text_2(n):
 
     # Calculate daily mean cloud cover
     daily_mean = hourly_dataframe.resample('D').mean()
-    daily_cloud_cover = round(daily_mean["cloud_cover"].iloc[1],1)
+    daily_cloud_cover = int(daily_mean["cloud_cover"].iloc[1])
 
+    # Prepare the data for the DataTable
+    weather_data = [
+        {"Metric": "Ambient temp", "Value": f"{daily_temperature_2m_min} - {daily_temperature_2m_max}°C"},
+        {"Metric": "Real-feel", "Value": f"{daily_apparent_temperature_min} - {daily_apparent_temperature_max}°C"},
+        {"Metric": "Precipitation", "Value": f"{daily_precipitation_sum}mm"},
+        {"Metric": "Cloud cover", "Value": f"{daily_cloud_cover}%"},
+        {"Metric": "Wind speed", "Value": f"{daily_wind_speed_10m_max}km/h"},
+        {"Metric": "UV index", "Value": f"{daily_uv_index_max}"}
+    ]
+
+    # Define the DataTable
     weather_forecast_card = html.Div(
         [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H1("Tomorrow's Weather", className="text-center"),
-                        html.P(
-                            [
-                                html.Br(),  # Line break
-                                f"Ambient temperature: {daily_temperature_2m_min}°C - {daily_temperature_2m_max}°C",
-                                html.Br(),  # Line break
-                                f"Real-feel: {daily_apparent_temperature_min}°C - {daily_apparent_temperature_max}°C",
-                                html.Br(),  # Line break
-                                html.Br(),  # Line break
-                                f"Precipitation: {daily_precipitation_sum}mm",
-                                html.Br(),  # Line break
-                                f"Cloud cover: {daily_cloud_cover}%",
-                                html.Br(),  # Line break
-                                html.Br(),  # Line break
-                                f"Wind speed: {daily_wind_speed_10m_max}km/h",
-                                html.Br(),  # Line break
-                                f"UV index: {daily_uv_index_max}"
+                        html.H1("Tomorrow's Weather", className="text-center", style={'color': 'white'}),
+                        dash_table.DataTable(
+                            columns=[
+                                {"name": "", "id": "Metric"},
+                                {"name": "", "id": "Value"}
                             ],
-                            style={"fontSize": "50px"},  # Smaller text size for temperature details
-                            className="card-text",
-                        ),
+                            data=weather_data,
+                            style_table={'overflowX': 'auto', 'backgroundColor': 'rgba(0, 0, 0, 0)'},
+                            style_cell={'textAlign': 'left', 'padding': '10px', 'backgroundColor': 'rgba(0, 0, 0, 0)', 'border': 'none'},
+                            style_header={'display': 'none'},
+                            style_data={'backgroundColor': 'rgba(0, 0, 0, 0)', 'color': 'white', 'fontSize': '24px'}
+                        )
                     ]
                 ),
-                color=interpolate_colour(((int(daily_temperature_2m_min) + int(daily_temperature_2m_max)) / 2.0), 0, 40, "lightblue", "red"),
+                color= 'rgb(50,50,50)',
                 className="w-100 mb-1",  # fills the available width. has a margin on the bottom
             )
         ],
-        style={"height": "95vh"},  # Set the height of the container to 95% of viewport height
+        style={"height": "90vh"},  # Set the height of the container to 95% of viewport height
         className="d-flex align-items-stretch"
     )
 
@@ -385,57 +425,64 @@ def update_text_3(n):
         departures = service['departures'][:3]  # Get the first two departures
         for departure in departures:
             bus_services.append({
-                'Service Name': service_name,
-                'Minutes Until Departure': departure['minutes'],
+                'Bus': service_name,
+                'Mins to Departure': departure['minutes'],
                 'Departure Time': departure['departure_time']
             })
 
     # Creating a DataFrame for easy display
-    df = pd.DataFrame(bus_services).sort_values(by = ['Minutes Until Departure'], ascending=True)
+    df = pd.DataFrame(bus_services).sort_values(by = ['Mins to Departure'], ascending=True)
 
     bus_card = html.Div(
         [
             dbc.Card(
                 [
-                    dbc.CardHeader("Bus Departure Times", style={"color": "white", "fontSize": "40px"}),
                     dbc.CardBody(
                         dash_table.DataTable(
                             columns=[{"name": i, "id": i} for i in df.columns],
                             data=df.to_dict('records'),
-                            style_table={'overflowX': 'auto'},
-                            style_cell={'textAlign': 'left'},
-                            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
-                            style_data={'backgroundColor': 'rgb(50, 50, 50)', 'color': 'white'},
+                            style_table={'overflowX': 'auto', 'backgroundColor': 'rgba(0, 0, 0, 0)'},
+                            style_cell={'textAlign': 'left', 'padding': '10px', 'backgroundColor': 'rgba(0, 0, 0, 0)', 'border': 'none'},
+                            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white', "fontSize": "20px"},
+                            style_data={'backgroundColor': 'rgb(50, 50, 50)', 'color': 'white', "fontSize": "30px"},
                         )
                     )
                 ],
-                style={"width": "100%", "fontSize": "32px"},
+                style={"width": "100%"},
                 color='rgb(50, 50, 50)'
             )
         ],
-    style = {"height": "95vh"},
+    style = {"height": "90vh"},
     className = "d-flex align-items-stretch"
     )
 
     return bus_card
 
+# Multi-page callback to update content and arrows
 @app.callback(
-    Output('page-content', 'children'),
+    [Output('page-content', 'children'),
+     Output('left-arrow', 'href'),
+     Output('right-arrow', 'href')],
     Input('url', 'pathname')
 )
-
-
-def update_page(pathname):
+def display_page(pathname):
     if pathname == '/page-1':
-        return page_1_layout
+        left_href = '/page-3'  # Wrap around to the last page
+        right_href = '/page-2'
+        return page_1_layout, left_href, right_href
     elif pathname == '/page-2':
-        return page_2_layout
+        left_href = '/page-1'
+        right_href = '/page-3'
+        return page_2_layout, left_href, right_href
     elif pathname == '/page-3':
-        return page_3_layout
+        left_href = '/page-2'
+        right_href = '/page-1'
+        return page_3_layout, left_href, right_href
     else:
-        return '404 Page Not Found'
+        return "404 Page Not Found", '/', '/'
 
 if __name__ == '__main__':
-    Timer(5,
+    Timer(2,
           open_fullscreen_browser).start()  # Note no parentheses here
-    app.run_server(debug=True, host='127.0.0.1', port=8050, use_reloader=False)  # Starts the Dash app
+    #app.run_server(debug=True, host='127.0.0.1', port=8050, use_reloader=False)  # Starts the Dash app
+    app.run_server(host='0.0.0.0', port=8050, debug=True, use_reloader=False)
