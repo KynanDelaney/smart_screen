@@ -1,3 +1,6 @@
+# GET SAVED VALUES
+from dotenv import load_dotenv
+
 # live weather data
 import openmeteo_requests
 import requests_cache
@@ -16,14 +19,22 @@ import matplotlib.colors as mcolors
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, callback, Input, Output, dash_table
-
-# launch into dash on script execute
-import subprocess as sp
-from threading import Timer
 import os
 
 
 # Setup variables
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Retrieve the variables
+home_latitude = float(os.getenv('HOME_LATITUDE'))
+home_longitude = float(os.getenv('HOME_LONGITUDE'))
+home_bus_url = os.getenv('HOME_BUS')
+bus_1 = os.getenv('BUS_1')
+bus_2 = os.getenv('BUS_2')
+
+
 
 # Setup the Open-Meteo API client with cache and retry on error
 cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
@@ -34,16 +45,13 @@ openmeteo = openmeteo_requests.Client(session = retry_session)
 # The order of variables in hourly or daily is important to assign them correctly below
 weather_url = "https://api.open-meteo.com/v1/forecast"
 params = {
-	"latitude": 55.967049727775326,
-	"longitude": -3.1928189339319695,
+	"latitude": home_latitude,
+	"longitude": home_longitude,
 	"current": ["temperature_2m", "apparent_temperature", "precipitation", "cloud_cover", "wind_speed_10m", "wind_direction_10m"],
     "hourly": "cloud_cover",
 	"daily": ["temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "uv_index_max", "precipitation_sum", "wind_speed_10m_max"],
 	"forecast_days": 2
 }
-
-bus_url = "https://lothianapi.co.uk/departureBoards/website?stops=6200206810"
-
 
 # Setup functions
 # use weather variables to choose background colours of cards
@@ -105,14 +113,6 @@ def map_cloud_to_icon(precipitation = 0, cloud_cover = 0):
 
     else:
         return html.P("Get inside!", style={"fontSize": "30px"})
-
-# Function to open the browser after the Dash server starts
-def open_fullscreen_browser():
-    # Check OS and use the correct command for Chrome
-    if os.name == 'nt':  # Windows
-        os.system('start chrome "http://127.0.0.1:8050/" --kiosk')
-    elif os.name == 'posix':  # macOS/Linux
-        sp.Popen(['chromium-browser', '--kiosk', 'http://127.0.0.1:8050/'], shell=True)
 
 
 # Dash setup
@@ -397,7 +397,7 @@ def update_text_2(n):
 )
 def update_text_3(n):
     # Fetch the page content
-    response = requests.get(bus_url)
+    response = requests.get(home_bus_url)
     html_content = response.text
 
     # Print a snippet of the HTML content to confirm it's fetched correctly
@@ -418,17 +418,18 @@ def update_text_3(n):
     else:
         print("No JSON data found.")
 
-    # Extracting the first two departure times for each service
+    # Extracting the first three departure times for bus services
     bus_services = []
     for service in data['services']:
         service_name = service['service_name']
-        departures = service['departures'][:3]  # Get the first two departures
-        for departure in departures:
-            bus_services.append({
-                'Bus': service_name,
-                'Mins to Departure': departure['minutes'],
-                'Departure Time': departure['departure_time']
-            })
+        if service_name in [bus_1, bus_2]:  # Check if the service is in a list of preferred buses
+            departures = service['departures'][:2]  # Get the first three departures
+            for departure in departures:
+                bus_services.append({
+                    'Bus': service_name,
+                    'Mins to Departure': departure['minutes'],
+                    'Departure Time': departure['departure_time']
+                })
 
     # Creating a DataFrame for easy display
     df = pd.DataFrame(bus_services).sort_values(by = ['Mins to Departure'], ascending=True)
@@ -481,8 +482,6 @@ def display_page(pathname):
     else:
         return "404 Page Not Found", '/', '/'
 
-if __name__ == '__main__':
-    Timer(2,
-          open_fullscreen_browser).start()  # Note no parentheses here
-    #app.run_server(debug=True, host='127.0.0.1', port=8050, use_reloader=False)  # Starts the Dash app
-    app.run_server(host='0.0.0.0', port=8050, debug=True, use_reloader=False)
+#if __name__ == '__main__':
+
+   # app.run(host='0.0.0.0', port=8050, debug=False, use_reloader=False)
