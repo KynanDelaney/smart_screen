@@ -15,7 +15,7 @@ For Lothian buses, this is available from [here](https://www.lothianbuses.com/li
 For Lothian buses, the live times for a given bus stop are accessed from the following style of link: https://lothianapi.co.uk/departureBoards/website?stops=6200206350. 
 
 
-### Personal details
+### Adding personal details
 These values, and preferred bus routes, can be saved in a .env file and loaded by the dashboard.
 Below is an example .env for weather data for Edinburgh Castle, and Bus Stop data for two buses that pass along Princes Street.
 
